@@ -60,9 +60,9 @@ if submit:
 
             st.subheader("Retrieved sources")
             for r in results:
-                st.markdown(f"- **{r.get('source','<unknown>')}** — chunk {r.get('chunk_index')}\n\n```
-{r.get('text','')[:500]}
-```")
+                st.markdown(f"- **{r.get('source','<unknown>')}** — chunk {r.get('chunk_index')}")
+                excerpt = r.get('text', '')[:500]
+                st.code(excerpt)
 
             if use_openai:
                 api_key = os.getenv("OPENAI_API_KEY")
