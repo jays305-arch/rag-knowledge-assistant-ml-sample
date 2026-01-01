@@ -13,10 +13,39 @@ except Exception:
 
 try:
     import openai
+    from openai import OpenAI
 except Exception:
     openai = None
+    OpenAI = None
 
-from src.prompt_template import SYSTEM_PROMPT, build_user_prompt
+from src.prompt_template import (
+    SYSTEM_PROMPT,
+    USER_PROMPT_TEMPLATE,
+    build_user_prompt,
+    format_refusal,
+    REFUSAL_PREFIX,
+)
+
+
+def generate_grounded_response(openai_client: OpenAI, retrieved_text: str, question: str):
+    """Generate a grounded response using an OpenAI-compatible client.
+
+    This helper mirrors a modern OpenAI client call shape (`client.chat.completions.create`).
+    """
+    prompt = USER_PROMPT_TEMPLATE.format(
+        retrieved_context=retrieved_text,
+        user_question=question,
+    )
+
+    response = openai_client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.0,  # low temp for factual grounding
+    )
+    return response.choices[0].message.content
 
 
 def load_index(index_path: Path):
@@ -76,6 +105,32 @@ def main(index_path, meta_path, model_name, top_k, openai_completion):
 
         retrieved_context = "\n---\n".join(context_excerpts)
         user_prompt = build_user_prompt(retrieved_context=retrieved_context, user_question=query)
+
+        # Auto-refusal for sensitive domains (legal / medical / policy) when not present in context
+        sensitive_keywords = [
+            "legal", "law", "legal advice", "attorney", "court", "litigation",
+            "medical", "medicine", "doctor", "diagnosis", "treatment", "clinic",
+            "policy", "regulation", "regulatory", "compliance", "policy guidance",
+        ]
+
+        def _is_sensitive_question(q: str) -> bool:
+            ql = q.lower()
+            return any(kw in ql for kw in sensitive_keywords)
+
+        def _context_contains_evidence(ctx_texts) -> bool:
+            joined = "\n".join(ctx_texts).lower()
+            return any(kw in joined for kw in sensitive_keywords)
+
+        if _is_sensitive_question(query) and not _context_contains_evidence(context_excerpts):
+            reason = (
+                "Question requests legal/medical/policy advice but the provided sources do not "
+                "explicitly contain such information."
+            )
+            suggestion = "Provide authoritative documents or consult a qualified professional."
+            refusal_msg = format_refusal(reason, suggestion)
+            print("\nGrounded answer:")
+            print(refusal_msg)
+            return
 
         try:
             resp = openai.ChatCompletion.create(
