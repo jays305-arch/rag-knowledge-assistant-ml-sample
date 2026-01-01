@@ -1,0 +1,12 @@
+[
+  {
+    "source": "data/doc1.txt",
+    "chunk_index": 0,
+    "text": "Grounding LLM outputs with retrieved documents helps reduce hallucinations and improves factual accuracy.\nRAG systems retrieve evidence and condition generation on that evidence."
+  },
+  {
+    "source": "data/doc2.txt",
+    "chunk_index": 0,
+    "text": "Verification, citation, and source attribution improve trustworthiness of model outputs.\nCombining retrieval with model prompting encourages answers to be tied to sources."
+  }
+]

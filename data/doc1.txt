@@ -1,0 +1,2 @@
+Grounding LLM outputs with retrieved documents helps reduce hallucinations and improves factual accuracy.
+RAG systems retrieve evidence and condition generation on that evidence.

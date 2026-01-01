@@ -1,0 +1,2 @@
+Verification, citation, and source attribution improve trustworthiness of model outputs.
+Combining retrieval with model prompting encourages answers to be tied to sources.
