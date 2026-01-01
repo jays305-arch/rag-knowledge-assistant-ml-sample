@@ -1,5 +1,4 @@
 sentence-transformers>=2.2.2
-faiss-cpu
 numpy
 PyPDF2
 openai
