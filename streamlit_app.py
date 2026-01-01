@@ -2,14 +2,14 @@ import os
 from pathlib import Path
 
 import streamlit as st
-from sentence_transformers import SentenceTransformer
 
 try:
     import faiss
 except Exception:
     faiss = None
 
-from src.query import load_index, generate_grounded_response
+# Delay importing heavy/optional dependencies (sentence_transformers, faiss, src.query)
+# until runtime to avoid import errors during app startup on Streamlit Cloud.
 
 
 st.set_page_config(page_title="RAG Demo", layout="wide")
@@ -39,6 +39,16 @@ if submit:
             st.error("Index or metadata file not found. Run ingest first.")
         else:
             with st.spinner("Loading model and index..."):
+                try:
+                    from sentence_transformers import SentenceTransformer
+                    from src.query import load_index, generate_grounded_response
+                except Exception as e:
+                    st.error(
+                        "Missing or failed-to-import dependency: %s. "
+                        "Ensure requirements are installed in the deployment." % e
+                    )
+                    st.stop()
+
                 model = SentenceTransformer(model_name)
                 index = load_index(idx_path)
 
