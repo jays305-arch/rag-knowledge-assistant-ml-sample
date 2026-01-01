@@ -133,16 +133,22 @@ def main(index_path, meta_path, model_name, top_k, openai_completion):
             return
 
         try:
-            resp = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                max_tokens=400,
-                temperature=0.0,
-            )
-            answer = resp['choices'][0]['message']['content']
+            if OpenAI is not None:
+                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                answer = generate_grounded_response(client, retrieved_context, query)
+            else:
+                # fall back to legacy module-style API
+                resp = openai.ChatCompletion.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    max_tokens=400,
+                    temperature=0.0,
+                )
+                answer = resp['choices'][0]['message']['content']
+
             print("\nGrounded answer:")
             print(answer)
         except Exception as e:
