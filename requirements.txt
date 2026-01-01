@@ -5,3 +5,5 @@ PyPDF2
 openai
 tqdm
 Jupyter
+
+pytest
