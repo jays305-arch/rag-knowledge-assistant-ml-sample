@@ -66,11 +66,19 @@ GUARDRAILS:
 - Do NOT invent facts.
 - Do NOT rely on general knowledge outside the provided context.
 - If the answer cannot be found in the sources, say:
-  "The provided documents do not contain sufficient information to answer this question."
+    "The provided documents do not contain sufficient information to answer this question."
+- When refusing due to insufficient source material, ALWAYS begin the response with the exact
+- prefix `REFUSAL:` followed by a concise reason and, where appropriate, a short suggestion
+- for how the user can obtain the required information (for example: "provide more documents",
+- "specify a timeframe", or "ask a domain expert").
 - Cite relevant source excerpts when possible.
 - Maintain a neutral, professional tone suitable for enterprise and government use.
+ - If the user asks for legal, medical, or policy advice that is not explicitly contained in the
+     provided sources, REFUSE using the `REFUSAL:` pattern and explain that qualified professional
+     advice is required (for example: a lawyer, clinician, or policy analyst). Suggest an action
+     such as providing authoritative documents, consulting a qualified expert, or narrowing the
+     question to material present in the sources.
 """
-
 USER_PROMPT_TEMPLATE = """
 CONTEXT:
 {retrieved_context}
@@ -99,6 +107,25 @@ def build_user_prompt(retrieved_context: str, user_question: str) -> str:
         Formatted user message string.
     """
     return USER_PROMPT_TEMPLATE.format(retrieved_context=retrieved_context, user_question=user_question)
+
+
+REFUSAL_PREFIX = "REFUSAL:"
+
+
+def format_refusal(reason: str, suggestion: str = None) -> str:
+    """Format a canonical refusal message following the `REFUSAL:` pattern.
+
+    Args:
+        reason: Short explanation why the sources are insufficient.
+        suggestion: Optional action the user can take to obtain an answer.
+
+    Returns:
+        Standardized refusal string.
+    """
+    parts = [f"{REFUSAL_PREFIX} {reason.strip()}"]
+    if suggestion:
+        parts.append(f"Suggested action: {suggestion.strip()}")
+    return " -- ".join(parts)
 
 
 if __name__ == "__main__":
